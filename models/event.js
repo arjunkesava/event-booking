@@ -19,7 +19,7 @@ const eventSchema = new Schema({
         type: Date,
         required: true
     },
-    creater: {
+    creator: {
         type: Schema.Types.ObjectId,
         ref: 'User'
     }
