@@ -17,6 +17,18 @@ const events = async eventIDs => {
     }
 }
 
+const singleEvent = async eventId => {
+    try{
+        const eventDetails = await Event.findById(eventId)
+        return {
+            ...eventDetails._doc,
+            creator: user.bind(this, eventDetails.creator)
+        }
+    } catch (err) {
+        throw err
+    }
+}
+
 const user = async userId => {
     try {
         const user = await User.findById(userId)
@@ -30,14 +42,16 @@ const user = async userId => {
 }
 
 module.exports = {
-    bookings: async => {
+    bookings: async () => {
         try {
             const bookings = await Booking.find({})
             return bookings.map(booking => {
                 return {
                     ...booking._doc,
-                    createdAt: new Date(booking._doc.createdAt).toISOString(),
-                    updatedAt: new Date(booking._doc.updatedAt).toISOString()
+                    user: user.bind(this, booking.user),
+                    event: singleEvent.bind(this, booking.event),
+                    createdAt: new Date(booking.createdAt).toISOString(),
+                    updatedAt: new Date(booking.updatedAt).toISOString()
                 }
             })
         } catch (error) {
@@ -50,7 +64,7 @@ module.exports = {
             return eventsList.map(event => {
                 return {
                     ...event._doc,
-                    creator: user.bind(this, event._doc.creator)
+                    creator: user.bind(this, event.creator)
                 }
             })
         } catch (err) {
@@ -117,7 +131,11 @@ module.exports = {
             })
             const result = await bookingDetails.save()
             return {
-                ...result._doc
+                ...result._doc,
+                user: user.bind(this, result._doc.user),
+                event: singleEvent.bind(this, result._doc.event),
+                createdAt: new Date(result._doc.createdAt).toISOString(),
+                updatedAt: new Date(result._doc.updatedAt).toISOString()
             }
         } catch (error) {
             throw error
@@ -125,7 +143,13 @@ module.exports = {
     },
     cancelBooking: async args => {
         try {
-            const bookingDetails = await Event.findByIdAndDelete({ _id: args.bookingId })
+            const booking = await Booking.findById(args.bookingId).populate('event')
+            const event = {
+                ...booking.event._doc,
+                creator: user.bind(this, booking.event._doc.creator)
+            }
+            await Booking.deleteOne({ _id: args.bookingId })
+            return event
         } catch (error) {
             throw error
         }
