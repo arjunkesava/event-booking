@@ -14,20 +14,23 @@ module.exports = {
             throw err
         }
     },
-    createEvent: async args => {
+    createEvent: async (args, req) => {
+        if(!req.isAuth){
+            throw new Error('Unauthorized')
+        }
         const event = new Event({
             title: args.eventInput.title,
             description: args.eventInput.description,
             price: +args.eventInput.price,
             date: new Date(args.eventInput.date),
-            creator: "5c5ab7ac34ceee6900c4a90b"
+            creator: req.userId
         })
+        let createdEvent
         try {
             // Save the event to mongo db here
             const result = await event.save()
-            let = transformEvent(result)
-
-            const creator = await User.findById("5c5ab7ac34ceee6900c4a90b")
+            createdEvent = transformEvent(result)
+            const creator = await User.findById(req.userId)
             if (!creator) {
                 throw Error('User not found')
             }
