@@ -47,14 +47,14 @@ class AuthPage extends Component{
 		if(!this.state.isLogin) {
 			requestBody = {
 				query: `
-				mutation {
-					createUser(userInput: {email:"${email}", password:"${password}"}) {
-						_id
-						email
+					mutation {
+						createUser(userInput: {email:"${email}", password:"${password}"}) {
+							_id
+							email
+						}
 					}
-				}
-				`	
-			}	
+				`
+			}
 		}
 
 		fetch('http://localhost:9000/graphql',{
@@ -70,12 +70,13 @@ class AuthPage extends Component{
 			}
 			return res.json()
 		})
-		.then(res => {
-			if (res.data.login.token) {
+		.then(resData => {
+			console.log(":",resData)
+			if (resData.data.login.token) {
 				this.context.login(
-					res.data.login.token,
-					red.data.login.userId,
-					res.data.login.tokenExpiration
+					resData.data.login.token,
+					resData.data.login.userId,
+					resData.data.login.tokenExpiration
 				)
 			}
 		})
