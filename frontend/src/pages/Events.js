@@ -16,6 +16,7 @@ class EventsPage extends React.Component{
 		creating: false,
 		isLoading: false
 	}
+	isActive = true
 
 	static contextType = AuthContext
 
@@ -43,7 +44,48 @@ class EventsPage extends React.Component{
 		})
 	}
 
-	bookEventHandler = () => {}
+	bookEventHandler = () => {
+		if(!this.context.token) {
+			this.setState({selectedEvent: null});
+			return;
+		}
+		this.setState({isLoading: true})
+
+		const requestBody = {
+			query: `
+				mutation {
+					bookEvent(eventId: "${this.state.selectedEvent._id}") {
+						_id
+						createdAt
+						updatedAt
+					}
+				}
+			`
+		}
+
+		fetch('http://localhost:9000/graphql',{
+			method: 'POST',
+			body: JSON.stringify(requestBody),
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: 'Bearer' + this.context.token
+			}
+		})
+		.then(res => {
+			if (res.status !== 200 && res.status !== 201) {
+				throw new Error('Invalid Request')
+			}
+			return res.json()
+		})
+		.then(resData => {
+			console.log(resData)
+			this.setState({selectedEvent: null, isLoading: false})
+		})
+		.catch(err => {
+			console.log(err)
+			this.setState({selectedEvent: null, isLoading: false})
+		})
+	}
 
 	onModalCancel = () => {
 		this.setState({creating: false, selectedEvent: null})
@@ -119,7 +161,7 @@ class EventsPage extends React.Component{
 
 	fetchEvents = () => {
 		this.setState({isLoading: true})
-		
+
 		const requestBody = {
 			query: `
 				query {
@@ -153,12 +195,20 @@ class EventsPage extends React.Component{
 		})
 		.then(resData => {
 			const events = resData.data.events
-			this.setState({events, isLoading: false})
+			if (this.isActive) {
+				this.setState({events, isLoading: false})
+			}
 		})
 		.catch(err => {
 			console.log(err)
-			this.setState({isLoading: false})
+			if (this.isActive) {
+				this.setState({isLoading: false})
+			}
 		})
+	}
+
+	componentWillUnmount () {
+		this.isActive = false
 	}
 
 	render() {
@@ -193,7 +243,7 @@ class EventsPage extends React.Component{
 						</form>
 					</Modal>
 				)}
-				{this.state.selectedEvent && 
+				{this.state.selectedEvent &&
 					<Modal
 					title={this.state.selectedEvent.title}
 					onCancel={this.onModalCancel}
