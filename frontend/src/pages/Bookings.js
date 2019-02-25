@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import Spinner from '../components/Spinner/Spinner'
 import AuthContext from '../context/auth-context'
+import BookingsList from '../components/Bookings/BookingsList/BookingsList'
 
 class BookingsPage extends Component{
 	state = {
@@ -37,7 +38,7 @@ class BookingsPage extends Component{
 			body: JSON.stringify(requestBody),
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: 'Bearer' + this.context.token
+				'Authorization': 'Bearer ' + this.context.token
 			}
 		})
 		.then(res => {
@@ -56,18 +57,54 @@ class BookingsPage extends Component{
 		})
 	}
 
+	deleteBookingHandler = bookingId => {
+		this.setState({isLoading: true})
+
+		const requestBody = {
+			query: `
+				mutation{
+					cancelBooking(bookingId: "${bookingId}"){
+						_id
+						title
+					}
+				}
+			`
+		}
+
+		fetch('http://localhost:9000/graphql',{
+			method: 'POST',
+			body: JSON.stringify(requestBody),
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: 'Bearer ' + this.context.token
+			}
+		})
+		.then(res => {
+			if (res.status !== 200 && res.status !== 201) {
+				throw new Error('Invalid Request')
+			}
+			return res.json()
+		})
+		.then(resData => {
+			this.setState(prevState => {
+				const updatedBookings = prevState.bookings.filter(booking => {
+					return booking._id !== bookingId
+				})
+				return { bookings: updatedBookings, isLoading: false }
+			})
+		})
+		.catch(err => {
+			console.log(err)
+			this.setState({isLoading: false})
+		})
+	}
+
 	render(){
 		return (
 			<React.Fragment>
 				{this.state.isLoading ?
 					<Spinner /> : (
-					<ul>
-						{this.state.bookings.map(booking => {
-							return <li key={booking._id}>
-								{booking.event.title} - {new Date(booking.createdAt).toLocaleDateString()}
-							</li>
-						})}
-					</ul>
+					<BookingsList bookings={this.state.bookings} onDeleteBooking={this.deleteBookingHandler} />
 				)}
 			</React.Fragment>
 		)
