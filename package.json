@@ -12,9 +12,11 @@
   "dependencies": {
     "bcrypt": "^3.0.3",
     "body-parser": "^1.18.3",
+    "dataloader": "^1.4.0",
     "express": "^4.16.4",
     "express-graphql": "^0.7.1",
     "graphql": "^14.0.2",
+    "jsonwebtoken": "^8.4.0",
     "mongoose": "^5.4.9"
   },
   "devDependencies": {
